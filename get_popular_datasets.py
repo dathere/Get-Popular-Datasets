@@ -9,9 +9,11 @@ log = logging.getLogger(__name__)
 
 # API endpoint
 package_search_url = (
-    "{}/api/action/package_search?q=*:*&sort=views_total%20desc&rows={}"
+    "{}/api/action/package_search?{}&sort=views_total%20desc&rows={}"
 )
 pakcage_show_url = "{}/api/action/package_show?id="
+# Default query
+query = "q=*:*"
 
 
 def fetch_data(url):
@@ -126,7 +128,13 @@ def main():
     if not default.get("output_file"):
         raise ValueError("No output file provided in the configuration file.")
     # Construct the API URL
-    url = package_search_url.format(default.get("url"), default.get("rows"))
+    org = default.get("organization") or None
+    rows = default.get("rows")
+    if org:
+        url = package_search_url.format(
+            default.get("url"), query + f"+organization:{org}", rows)
+    else:
+        url = package_search_url.format(default.get("url"), rows)
     # Fetch the dataset information
     log.info("Fetching data from the API")
     data = fetch_data(url)
