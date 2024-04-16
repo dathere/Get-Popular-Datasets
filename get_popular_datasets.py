@@ -4,7 +4,6 @@ from collections import defaultdict
 import configparser
 
 import logging
-import logging
 
 log = logging.getLogger(__name__)
 
@@ -54,6 +53,7 @@ def save_to_csv(data, config):
 
     """
     filename = config["default"].get("output_file")
+    portal = config["default"].get("url")
     with open(filename, mode="w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
         # Define the CSV column headers
@@ -73,7 +73,7 @@ def save_to_csv(data, config):
         for org, datasets in data.items():
             for dataset in datasets:
                 title = dataset["title"]
-                url = dataset["url"]
+                url = portal + "/dataset/" + dataset["name"]
                 metadata_created = dataset["metadata_created"]
                 metadata_modified = dataset["metadata_modified"]
                 views = get_dataset_views(dataset, config)
@@ -95,12 +95,14 @@ def get_dataset_views(dataset, config):
     return data.get("tracking_summary").get("total", 0)
 
 
-def group_by_organization(data):
+def group_by_organization(data, organization=None):
     """Group datasets by their organization."""
     grouped_data = defaultdict(list)
     for dataset in data["result"]["results"]:
         org_name = dataset["organization"]["title"]
-        grouped_data[org_name].append(dataset)
+        org = dataset["organization"]["name"]
+        if organization and org == organization:
+            grouped_data[org_name].append(dataset)
     return grouped_data
 
 
@@ -130,7 +132,7 @@ def main():
     data = fetch_data(url)
     # Group datasets by organization
     log.info("Grouping datasets by organization")
-    grouped_data = group_by_organization(data)
+    grouped_data = group_by_organization(data, default.get("organization"))
     # Save the information to a CSV file, grouped by organization
     log.info("Saving data to CSV file")
     save_to_csv(grouped_data, config)

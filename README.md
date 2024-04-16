@@ -28,6 +28,7 @@ You can configure the script by changing the values in the `config.ini` file.
 url = https://catalog.data.gov   # The URL of the CKAN portal.
 rows = 100                       # The number of datasets to search for.
 output_file = output.csv         # The name of the output file.
+organization = org_name          # The name of the organization to search for.
 ```
 
 ## Report
