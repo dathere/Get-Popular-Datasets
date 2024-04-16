@@ -4,16 +4,13 @@ from collections import defaultdict
 import configparser
 
 import logging
+from collections import defaultdict
 
 log = logging.getLogger(__name__)
 
 # API endpoint
-package_search_url = (
-    "{}/api/action/package_search?{}&sort=views_total%20desc&rows={}"
-)
+package_search_url = "{}/api/action/package_search?{}&sort=views_total%20desc&rows={}"
 pakcage_show_url = "{}/api/action/package_show?id="
-# Default query
-query = "q=*:*"
 
 
 def fetch_data(url):
@@ -102,9 +99,7 @@ def group_by_organization(data, organization=None):
     grouped_data = defaultdict(list)
     for dataset in data["result"]["results"]:
         org_name = dataset["organization"]["title"]
-        org = dataset["organization"]["name"]
-        if organization and org == organization:
-            grouped_data[org_name].append(dataset)
+        grouped_data[org_name].append(dataset)
     return grouped_data
 
 
@@ -119,6 +114,9 @@ def main():
     # loading log configuration
     logging.basicConfig(level=logging.INFO)
     # logging.config.fileConfig('logging.ini')
+    # Default query
+    query = "q=*:*"
+    # Load configuration settings
     config = load("config.ini")
     default = config["default"]
     if not default.get("url"):
@@ -127,14 +125,14 @@ def main():
         raise ValueError("No rows provided in the configuration file.")
     if not default.get("output_file"):
         raise ValueError("No output file provided in the configuration file.")
+    
     # Construct the API URL
     org = default.get("organization") or None
-    rows = default.get("rows")
+    rows = default.get("rows") or 0
     if org:
-        url = package_search_url.format(
-            default.get("url"), query + f"+organization:{org}", rows)
-    else:
-        url = package_search_url.format(default.get("url"), rows)
+        query = "q=+organization:{}".format(org)
+    url = package_search_url.format(default.get("url"), query, rows)
+    log.info(f"API URL: {url}")
     # Fetch the dataset information
     log.info("Fetching data from the API")
     data = fetch_data(url)
